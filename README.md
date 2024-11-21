@@ -12,6 +12,8 @@ Installation:
 - for compile typsecript: ```npx tsc```
 - start with: ```npm run dev```
 
+Your application will start on: ```http://localhost:{YOUR_PORT}```
+
 # Description
 
 Flash Loans detector is a system for detecting Flash Loans attacks on the blockchain, using three analysis methods: transaction models, cryptographic signatures and analysis of financial flows, with a dynamic scoring system to assess the severity of suspicious transactions.
@@ -33,6 +35,8 @@ This API route requires data input that respects this format:
 }
 ```
 You can execute the call from POSTMAN or any AJAX request within your applications.
+
+Localhost post route: ```http://localhost:{YOUR_PORT}/api/v1/detectAttack```
 
 Response format:
 
