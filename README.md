@@ -1,0 +1,2 @@
+# flashloans-detector
+Technical test
