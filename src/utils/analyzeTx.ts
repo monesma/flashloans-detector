@@ -3,37 +3,48 @@ import { detectByTxPattern } from "./detectByTxPattern";
 import { detectByTxAmounts } from "./detectByTxAmounts";
 import { detectByLogSx } from "./detectByLogSx";
 
-export async function analyzeTransaction(receipt: ethers.TransactionReceipt) {
-  const patternTest: boolean = await detectByTxPattern(receipt);
-  const logSignTest: boolean = await detectByLogSx(receipt);
-  const txAmountsTest: boolean = await detectByTxAmounts(receipt);
+export async function analyzeTransaction(
+  receipt: ethers.TransactionReceipt
+): Promise<{ severity: string; detectedTests: Record<string, string> }> {
+  const [patternTest, logSignTest, txAmountsTest] = await Promise.all([
+    detectByTxPattern(receipt),
+    detectByLogSx(receipt),
+    detectByTxAmounts(receipt),
+  ]);
 
-  const count = [patternTest, logSignTest, txAmountsTest].filter(
-    Boolean
-  ).length;
+  const tests = {
+    patternTest: "Multiple transactions detected",
+    logSignTest: "Flash Loan detected",
+    txAmountsTest: "High transfer amount detected",
+  };
 
-  let severity = "Low";
-  if (count === 1) severity = "Medium";
-  else if (count === 2) severity = "High";
-  else if (count === 3) severity = "Critical";
+  const detectedTests: { [key: string]: string } = {};
 
-  if (count > 0) {
-    const detectedTests: { [key: string]: string } = {};
+  let count = 0;
 
-    if (patternTest)
-      detectedTests.patternTest = "Multiple transactions detected";
-    if (logSignTest) detectedTests.logSignTest = "Flash Loan detected";
-    if (txAmountsTest)
-      detectedTests.txAmountsTest = "High transfer amount detected";
-
-    return {
-      severity,
-      detectedTests,
-    };
+  if (patternTest) {
+    detectedTests.patternTest = tests.patternTest;
+    count++;
   }
 
-  return {
-    severity: "Low",
-    detectedTests: {},
-  };
+  if (logSignTest) {
+    detectedTests.logSignTest = tests.logSignTest;
+    count++;
+  }
+
+  if (txAmountsTest) {
+    detectedTests.txAmountsTest = tests.txAmountsTest;
+    count++;
+  }
+
+  const severity =
+    count === 0
+      ? "Low"
+      : count === 1
+      ? "Medium"
+      : count === 2
+      ? "High"
+      : "Critical";
+
+  return { severity, detectedTests };
 }

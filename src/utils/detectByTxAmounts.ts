@@ -1,12 +1,15 @@
 import { ethers } from "ethers";
 
-export function detectByTxAmounts(receipt: ethers.TransactionReceipt): boolean {
-  return receipt.logs.some((log) => {
-    try {
-      const amount = ethers.toBigInt(log.data);
-      return amount > ethers.parseEther("100000");
-    } catch {
-      return false;
-    }
-  });
+export function detectByTxAmounts(receipt: ethers.TransactionReceipt): Promise<boolean> {
+  
+  return new Promise(resolve => {
+    receipt.logs.some((log) => {
+      try {
+        const amount = ethers.toBigInt(log.data)
+        resolve(amount > ethers.parseEther("100000"))
+      } catch {
+        resolve(false)
+      }
+    });
+  })
 }
