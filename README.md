@@ -48,6 +48,7 @@ Response format:
         {
             "attackId": 1,
             "txHash": "0xd66d082faaa425afcf3b072378566b8abda83fec5ebfc4f2fbd470d7a5ab9ffe",
+            "contractAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
             "flashLoanDetected": {
                 "severity": "Critical",
                 "detectedTests": {
@@ -61,7 +62,25 @@ Response format:
             "amountLostInToken": "2077.872270211890788611",
             "amountLostInDollar": 6948903.560933413,
             "chainId": "0x1"
-        }
+        },
+	...others
+    ],
+    "chainId": "0x1",
+    "unknownContractType": [
+        {
+            "attackId": 2,
+            "txHash": "0xbbfcd425ce2a51571c2191c76c47b0e90d7fae3fade33155a12e138c77bf7f2f",
+            "contractAddress": "0xF3dE3C0d654FDa23daD170f0f320a92172509127",
+            "flashLoanDetected": "Not available",
+            "msg": "This contract is not ERC20 and not ERC721",
+            "attackerAddress": null,
+            "victimAddress": null,
+            "amountLostInToken": "Not available",
+            "amountLostInDollar": "Not available",
+            "suggest": "Analysing the smart contract code",
+            "chainId": "0x1"
+        },
+	...others
     ]
 }
 ```
@@ -74,16 +93,16 @@ The role of this function is central to this application. It carries out each of
 
 #### How it work
 
-1 - Executes each of the three detectors, which returns whether or not (boolean) an anomaly is detected.
+1 - Executes each of the three detectors asynchronously, which improves the performance of our queries indicating whether or not an anomaly has been detected (Boolean).
 
-2 - Filter to count positive tests for risks
+2 - Filters to count positive tests for risks
 
-3 - Assigns the severity level of the risk factor based on the number of positive tests
+3 - Assigns the severity level of the risk factor according to the number of positive tests (Low, Medium, Hard, Critical).
 
 4 - If one or more detectors are activated:
 
-  - Adds the tests that have been activated to the response object
-  - Returns the severity and positive tests (not all tests, just those activated)
+  - Adds the tests that have been activated to the response object.
+  - Returns the severity and the positive tests (not all the tests, only those that have been activated)
 
 ### detectByTxPattern
 
@@ -93,7 +112,7 @@ The function extracts the addresses of the contracts involved in the transaction
 #### How it work
 
 1 - Creation of a single list of contract addresses that have issued logs in the transaction, excluding the null address.
-2 - If more than two unique contracts (three or more) are detected in the logs, this indicates that the transaction contains several interactions (often called sub-transactions) with different contracts. In this case, the function returns true, indicating a positive result.
+2 - If more than two unique contracts (three or more) are detected in the logs, this indicates that the transaction contains several interactions (often called sub-transactions) with different contracts. In this case, the function returns true as a promise, indicating a positive result.
 
 ### detectByLogSx
 
@@ -103,7 +122,7 @@ The function analyses a transaction receipt to detect Flash Loan hints based on 
 
 1 - Creation of a signature database of well-known FlashLoan contracts
 2 - Checks whether a log matches one of the signatures
-3 - Return positive or negative (boolean)
+3 - Return positive or negative (boolean) as a promise
 
 ### detectByTxAmounts
 
@@ -114,7 +133,7 @@ The function analyses the transfer amounts in the transaction logs to detect sus
 1 - consultation of all logs
   - Extraction of the log amount if possible
     
-2 - Return positive or negative (boolean)
+2 - Return positive or negative (boolean) as a promise
 
 ## Utilities functions
 
@@ -167,3 +186,8 @@ The function uses CoinGecko's API to retrieve the price in dollars (USD) of a sp
 2 - Improving the severity criteria would be useful to adjust the severity according to the exact amount of the Flash Loan or the number of indicators detected. For example, if an extremely high amount is detected but only one test has been triggered, the severity could be adjusted to reflect the seriousness of the situation.
 
 3 - Apply a Real-time alerts for applications in production, it can be useful to send real-time alerts (for example, via a webhook or notification) if a certain severity threshold is reached.
+
+4 - Add as many known signatures as possible as flash loans smart contract signatures to increase detection accuracy (perhaps there is a dataset).
+
+5 - In this POC, I have analysed whether they are ERC20 or ERC721 smart contracts, which allows us to filter out a certain number of potential false positives.
+We can see that some contracts don't comply with any of these standards, so it's difficult to identify whether they are flash-loans and so I've extracted them into a smart contract category for analysis.
